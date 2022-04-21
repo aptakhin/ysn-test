@@ -52,7 +52,7 @@ class ClickhouseStorage:
     async def _insert(self, query, *args) -> None:
         try:
             await self._client.execute(query, args)
-        except ClientError as e:
+        except ChClientError as e:
             raise CantInsertToStorageError() from e
 
     @staticmethod
