@@ -38,8 +38,15 @@ Stop all and delete data:
 make clean
 ```
 
-### TODOs:
+### TODOs
+
 - No shortcuts for fast local running on machine. Only docker which is not fast when building
 - No logger
 - Some settings hardcoded in envs and docker-compose runs
 - Add mypy
+- In Clickhouse can add server side buffer for faster insert data
+- In Clickhouse can try to optimize empty value strings
+
+### Open questions
+
+- Now the public and private datas don't have any joining column. Is it required to join somehow them?

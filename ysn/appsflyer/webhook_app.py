@@ -30,10 +30,6 @@ async def attribution(request):
     except json.decoder.JSONDecodeError:
         logger.exception("Expected missing json body")
 
-    # TODO 1: We need here some proper validation with pydantic
-    # TODO 2: We need here some fast broker like Redis/RabbitMQ for rounded
-    #         and batched inserts to Clickhouse
-
     try:
         await request.app['storage'].insert(json_response)
     except CantInsertToStorageError:
@@ -53,8 +49,7 @@ async def storage(app):
 @web.middleware
 async def catch_uncought_exception(request, handler):
     try:
-        resp = await handler(request)
-        return resp
+        return await handler(request)
     except:  # noqa: E722
         logger.exception('Caught unhandled exception')
         return web.Response(status=HTTPStatus.INTERNAL_SERVER_ERROR.value)

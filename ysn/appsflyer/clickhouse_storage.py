@@ -2,8 +2,8 @@ from dataclasses import dataclass
 import json
 from typing import Any, Dict
 
-from aiohttp import ClientSession, ClientError
-from aiochclient import ChClient
+from aiohttp import ClientSession
+from aiochclient import ChClient, ChClientError
 
 
 class CantInsertToStorageError(RuntimeError):
@@ -12,6 +12,7 @@ class CantInsertToStorageError(RuntimeError):
 
 @dataclass
 class PublicPrivateHits:
+    """Helper dataclass to divide public and private fields."""
     public: Dict[str, Any]
     private: Dict[str, Any]
 
@@ -19,6 +20,8 @@ class PublicPrivateHits:
 
     @classmethod
     def split(cls, json_data: Dict[str, Any]) -> 'PublicPrivateHits':
+        """Splits the given json data to public and private classes"""
+        # TODO: Need unit-tests
         public_data = json_data.copy()  # Only copy keys
         private_data = {
             item: public_data.pop(item)
@@ -28,6 +31,7 @@ class PublicPrivateHits:
 
 
 class ClickhouseStorage:
+    """Storage class for insert interface for app."""
     def __init__(self, clickhouse_http_url: str):
         self._client = ChClient(
             session=ClientSession(),
@@ -35,7 +39,14 @@ class ClickhouseStorage:
         )
 
     async def insert(self, json_data: Dict[str, Any]) -> None:
+        """Insert the data from Appsflyer."""
         parsed = PublicPrivateHits.split(json_data)
+
+        # TODO 1: We need here some proper validation with pydantic
+        # TODO 2: We need here some fast broker like Redis/RabbitMQ for rounded
+        #         and batched inserts to Clickhouse
+        # TODO 3: Here can parallel insert queries
+
         await self._insert(
             'INSERT INTO default.private_hits FORMAT JSONEachRow',
             parsed.private,
@@ -54,13 +65,3 @@ class ClickhouseStorage:
             await self._client.execute(query, args)
         except ChClientError as e:
             raise CantInsertToStorageError() from e
-
-    @staticmethod
-    def _split_public_and_private_hits(json_data: Dict[str, Any]) \
-            -> PublicPrivateHits:
-        public_data = json_data.copy()  # Only copy keys
-        private_data = {
-            item: public_data.pop(item)
-            for item in PublicPrivateHits.PRIVATE_FIELDS
-        }
-        return PublicPrivateHits(public=public_data, private=private_data)
