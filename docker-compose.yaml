@@ -1,0 +1,37 @@
+version: '3.6'
+
+services:
+  clickhouse-server:
+    image: ${CI_REGISTRY_IMAGE}/clickhouse-server:${IMAGE_TAG:-latest}
+    build:
+      context: ./clickhouse-server
+      dockerfile: Dockerfile
+      cache_from:
+        - ${CI_REGISTRY_IMAGE}/clickhouse-server:${IMAGE_TAG:-latest}
+      args:
+        version: ${CLICKHOUSE_VERSION}
+    container_name: ysn_appsflyer_clickhouse_server
+    volumes:
+      - ./clickhouse-server/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+
+  appsflyer_webhook_app:
+    image: ${CI_REGISTRY_IMAGE}/appsflyer-webhook-app:${IMAGE_TAG:-latest}
+    build:
+      context: ./ysn
+      dockerfile: Dockerfile
+      cache_from:
+        - ${CI_REGISTRY_IMAGE}/appsflyer-webhook-app:${IMAGE_TAG:-latest}
+      args:
+        PIP_VERSION: ${PIP_VERSION}
+        POETRY_VERSION: ${POETRY_VERSION}
+    env_file:
+      - ./ysn/dev.env
+    container_name: ysn_appsflyer_webhook_app
+    ports:
+      - "8400:8400"
+    entrypoint: ["./wait_for_it.sh", "-s", "-t", "30", "clickhouse-server:8123", "--"]
+    command: ["gunicorn", "appsflyer.webhook_app:webhook_app", "--bind", "0.0.0.0:8400",  "--worker-class", "aiohttp.GunicornWebWorker"]
+

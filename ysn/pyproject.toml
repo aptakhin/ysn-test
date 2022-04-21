@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "ysn-appsflyer-webhook"
+version = "0.1.0"
+description = ""
+authors = ["Alexander Ptakhin <me@aptakhin.name>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+aiohttp = "^3.8.1"
+gunicorn = "^20.1.0"
+aiochclient = {version = "^2.1.0", extras = ["aiohttp"]}
+
+[tool.poetry.dev-dependencies]
+flake8 = "^4.0.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

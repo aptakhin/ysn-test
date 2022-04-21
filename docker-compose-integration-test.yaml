@@ -1,0 +1,16 @@
+version: '3.6'
+
+services:
+  appsflyer_webhook_app_test:
+    image: ${CI_REGISTRY_IMAGE}/appsflyer-webhook-app-integration-test:${IMAGE_TAG:-latest}
+    build:
+      context: ./integration-test
+      dockerfile: Dockerfile
+      cache_from:
+        - ${CI_REGISTRY_IMAGE}/appsflyer-webhook-app-integration-test:${IMAGE_TAG:-latest}
+      args:
+        PIP_VERSION: ${PIP_VERSION}
+        POETRY_VERSION: ${POETRY_VERSION}
+    container_name: ysn_appsflyer_webhook_app_integration_test
+    entrypoint: ["./wait_for_it.sh", "-s", "-t", "30", "appsflyer_webhook_app:8400", "--"]
+    command: ["pytest", "-vvv"]
