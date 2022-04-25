@@ -52,7 +52,7 @@ Send test data:
 
 ```bash
 make run
-curl -d @integration-test/templates/android.json "http://appsflyer_webhook_app:8400/attribution"
+curl -d @integration-test/templates/android.json "http://localhost:8400/attribution"
 ```
 
 ## Manual testing with Appsflyer
