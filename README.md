@@ -1,3 +1,5 @@
+The tiny webhook service for getting events from Appsflyer. Pythoned. Writes public and private data to Clickhouse.
+
 # Prerequisites
 
 ```
