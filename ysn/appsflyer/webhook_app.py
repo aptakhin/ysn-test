@@ -7,6 +7,7 @@ from aiohttp import web
 import appsflyer.settings as settings
 from appsflyer.clickhouse_storage import (
     ClickhouseStorage,
+    InvalidDataError,
     CantInsertToStorageError,
 )
 
@@ -28,12 +29,19 @@ async def attribution(request):
     try:
         json_response = await request.json()
     except json.decoder.JSONDecodeError:
-        logger.exception("Expected missing json body")
+        raise web.HTTPBadRequest(text='Expected json body')
 
     try:
-        await request.app['storage'].insert(json_response)
+        parsed = request.app['storage'].validate_insert(json_response)
+    except InvalidDataError:
+        raise web.HTTPBadRequest(
+            text='Incorrect input, missing private fields',
+        )
+
+    try:
+        await request.app['storage'].insert(parsed)
     except CantInsertToStorageError:
-        logger.exception("Can't write to storage")
+        raise web.HTTPInternalServerError(text="Can't write to storage")
 
     return web.Response(text='')
 
@@ -50,6 +58,9 @@ async def storage(app):
 async def catch_uncought_exception(request, handler):
     try:
         return await handler(request)
+    except web.HTTPException:  # rethrow any HTTP code
+        logging.exception('HTTP exception during execution')
+        raise
     except:  # noqa: E722
         logger.exception('Caught unhandled exception')
         return web.Response(status=HTTPStatus.INTERNAL_SERVER_ERROR.value)

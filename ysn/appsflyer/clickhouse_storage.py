@@ -6,6 +6,10 @@ from aiohttp import ClientSession
 from aiochclient import ChClient, ChClientError
 
 
+class InvalidDataError(ValueError):
+    pass
+
+
 class CantInsertToStorageError(RuntimeError):
     pass
 
@@ -23,10 +27,13 @@ class PublicPrivateHits:
         """Splits the given json data to public and private classes"""
         # TODO: Need unit-tests
         public_data = json_data.copy()  # Only copy keys
-        private_data = {
-            item: public_data.pop(item)
-            for item in cls.PRIVATE_FIELDS
-        }
+        try:
+            private_data = {
+                item: public_data.pop(item)
+                for item in cls.PRIVATE_FIELDS
+            }
+        except KeyError as e:
+            raise InvalidDataError(f'Missing field {e}')
         return PublicPrivateHits(public=public_data, private=private_data)
 
 
@@ -38,9 +45,11 @@ class ClickhouseStorage:
             url=clickhouse_http_url,
         )
 
-    async def insert(self, json_data: Dict[str, Any]) -> None:
+    def validate_insert(self, json_data: Dict[str, Any]) -> PublicPrivateHits:
+        return PublicPrivateHits.split(json_data)
+
+    async def insert(self, parsed: PublicPrivateHits) -> None:
         """Insert the data from Appsflyer."""
-        parsed = PublicPrivateHits.split(json_data)
 
         # TODO 1: We need here some proper validation with pydantic
         # TODO 2: We need here some fast broker like Redis/RabbitMQ for rounded
