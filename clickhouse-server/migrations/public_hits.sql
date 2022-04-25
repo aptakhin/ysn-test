@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS default.public_hits (
+CREATE TABLE default.public_hits (
     added     DateTime MATERIALIZED now(),
     json_data String
 )

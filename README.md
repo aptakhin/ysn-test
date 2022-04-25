@@ -13,6 +13,12 @@ Run service with storage:
 make run
 ```
 
+Or manually the same:
+
+```bash
+docker compose up -d --build
+```
+
 Since logic is quite simple. I've used only integration tests:
 
 ```bash
